@@ -21,6 +21,11 @@ const StoryCard: React.FC<StoryCardProps> = ({ story, onClick }) => {
           className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
         />
         <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-5 transition-all duration-300" />
+        
+        {/* Category Badge */}
+        <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-full text-xs font-semibold text-primary-700 shadow-sm border border-gray-100">
+            {story.category || 'عام'}
+        </div>
       </div>
       
       <div className="p-4 flex flex-col flex-grow">

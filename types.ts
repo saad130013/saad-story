@@ -17,6 +17,7 @@ export interface Story {
   title: string;
   description: string;
   author: string;
+  category: string; // New field for classification
   coverImage: string; // Base64 data URL
   pdfUrl: string; // Blob URL or Base64
   likes: number;

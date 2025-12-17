@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Upload, Home, Menu, LayoutDashboard, LogOut, ChevronDown, User as UserIcon } from 'lucide-react';
 import { User } from '../types';
+import { getSetting } from '../services/storage';
 
 interface NavbarProps {
     onNavigate: (page: string) => void;
@@ -13,128 +14,134 @@ interface NavbarProps {
 const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage, user, onLogin, onLogout }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [profileImg, setProfileImg] = useState<string | null>(null);
+
+  const ADMIN_EMAIL = 'saad130013@gmail.com';
+  const isOwner = user?.email === ADMIN_EMAIL;
+
+  useEffect(() => {
+    const loadImg = async () => {
+      const img = await getSetting('profileImage');
+      setProfileImg(img || 'https://ui-avatars.com/api/?name=Saad+Albogami&background=111827&color=fff&size=128');
+    };
+    loadImg();
+    
+    const handleUpdate = () => loadImg();
+    window.addEventListener('profile-updated', handleUpdate);
+    return () => window.removeEventListener('profile-updated', handleUpdate);
+  }, []);
 
   return (
-    <nav className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+    <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-24">
-          <div className="flex items-center cursor-pointer" onClick={() => onNavigate('home')}>
+        <div className="flex justify-between h-20">
+          <div className="flex items-center cursor-pointer group" onClick={() => onNavigate('home')}>
             <div className="flex-shrink-0 flex items-center">
-              {/* Profile Image - Large and elegant */}
-              <div className="relative h-16 w-16 ml-4 rounded-full overflow-hidden border-2 border-gray-900 shadow-md ring-2 ring-gray-100">
+              <div className="relative h-14 w-14 ml-4 rounded-full overflow-hidden border-2 border-white shadow-lg ring-1 ring-gray-900/10 transition-transform duration-300 group-hover:scale-105">
                   <img 
-                    src="/saad.jpg" 
+                    src={profileImg || ''} 
                     alt="Saad Albogami" 
                     className="h-full w-full object-cover object-top"
-                    onError={(e) => {
-                      const target = e.currentTarget;
-                      const fallbackSrc = 'https://ui-avatars.com/api/?name=Saad+Albogami&background=111827&color=fff&size=128&font-size=0.33';
-                      // Prevent infinite loop if fallback also fails
-                      if (target.src !== fallbackSrc) {
-                        target.src = fallbackSrc;
-                      }
-                    }}
                   />
               </div>
-              <div className="flex flex-col justify-center h-full">
-                  <span className="font-bold text-xl tracking-wide text-gray-900 font-sans uppercase leading-tight">SAAD ALBOGAMI</span>
-                  <span className="text-sm text-primary-600 font-medium">القصص والمحتوى</span>
+              <div className="flex flex-col justify-center">
+                  <span className="font-extrabold text-lg tracking-wider text-gray-900 font-sans uppercase leading-tight group-hover:text-primary-600 transition-colors">SAAD ALBOGAMI</span>
+                  <span className="text-xs text-primary-500 font-bold uppercase tracking-widest opacity-80">Official Library</span>
               </div>
             </div>
           </div>
           
-          <div className="hidden sm:flex sm:items-center sm:space-x-8 sm:space-x-reverse">
+          <div className="hidden sm:flex sm:items-center sm:space-x-4 sm:space-x-reverse">
             <button
               onClick={() => onNavigate('home')}
-              className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium h-full transition-colors ${
+              className={`inline-flex items-center px-4 py-2 text-sm font-bold rounded-full transition-all ${
                 currentPage === 'home' 
-                  ? 'border-primary-500 text-gray-900' 
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'bg-gray-900 text-white shadow-md' 
+                  : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
               }`}
             >
-              <Home className="w-5 h-5 ml-2" />
+              <Home className="w-4 h-4 ml-2" />
               الرئيسية
             </button>
-            <button
-              onClick={() => onNavigate('admin')}
-              className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium h-full transition-colors ${
-                currentPage === 'admin' 
-                  ? 'border-primary-500 text-gray-900' 
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              <LayoutDashboard className="w-5 h-5 ml-2" />
-              لوحة التحكم
-            </button>
-            <button
-              onClick={() => onNavigate('upload')}
-              className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium h-full transition-colors ${
-                currentPage === 'upload' 
-                  ? 'border-primary-500 text-gray-900' 
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              <Upload className="w-5 h-5 ml-2" />
-              رفع قصة جديدة
-            </button>
+            
+            {isOwner && (
+                <>
+                    <button
+                    onClick={() => onNavigate('admin')}
+                    className={`inline-flex items-center px-4 py-2 text-sm font-bold rounded-full transition-all ${
+                        currentPage === 'admin' 
+                        ? 'bg-primary-50 text-primary-700 ring-1 ring-primary-200' 
+                        : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                    }`}
+                    >
+                    <LayoutDashboard className="w-4 h-4 ml-2" />
+                    لوحة التحكم
+                    </button>
+                    
+                    <button
+                    onClick={() => onNavigate('upload')}
+                    className={`inline-flex items-center px-5 py-2 text-sm font-black rounded-full shadow-lg transition-all transform hover:scale-105 active:scale-95 ${
+                        currentPage === 'upload' 
+                        ? 'bg-primary-700 text-white' 
+                        : 'bg-primary-600 text-white hover:bg-primary-700'
+                    }`}
+                    >
+                    <Upload className="w-4 h-4 ml-2" />
+                    رفع قصة
+                    </button>
+                </>
+            )}
           </div>
 
           <div className="flex items-center">
             {user ? (
-                // Logged in State
                 <div className="relative mr-4">
                     <button 
                         onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                        className="flex items-center gap-2 bg-gray-50 hover:bg-gray-100 rounded-full pl-4 pr-1 py-1 transition-colors border border-gray-100"
+                        className="flex items-center gap-2 bg-gray-50 hover:bg-gray-100 rounded-full pl-4 pr-1 py-1 transition-all border border-gray-100"
                     >
                          <img 
-                            src={user.avatar} 
+                            src={isOwner ? profileImg! : user.avatar} 
                             alt={user.name} 
-                            className="h-8 w-8 rounded-full object-cover"
+                            className="h-8 w-8 rounded-full object-cover shadow-sm"
                          />
-                         <span className="text-sm font-medium text-gray-700 hidden md:block">{user.name}</span>
+                         <span className="text-sm font-bold text-gray-700 hidden md:block">{user.name}</span>
                          <ChevronDown className="w-4 h-4 text-gray-400" />
                     </button>
 
                     {isUserMenuOpen && (
-                        <div className="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 border border-gray-100 ring-1 ring-black ring-opacity-5 animate-fade-in-up origin-top-left z-50">
-                            <div className="px-4 py-2 border-b border-gray-100">
-                                <p className="text-xs text-gray-500">مسجل دخول بـ</p>
-                                <p className="text-sm font-bold text-gray-900 truncate">{user.email}</p>
+                        <div className="absolute left-0 mt-3 w-56 bg-white rounded-2xl shadow-2xl py-2 border border-gray-100 ring-1 ring-black ring-opacity-5 animate-fade-in-up origin-top-left z-50 overflow-hidden">
+                            <div className="px-5 py-4 border-b border-gray-50 bg-gray-50/50">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">حساب المستخدم</p>
+                                <p className="text-sm font-black text-gray-900 truncate">{user.email}</p>
                             </div>
                             <button
                                 onClick={() => {
                                     setIsUserMenuOpen(false);
                                     onLogout();
                                 }}
-                                className="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                                className="flex w-full items-center px-5 py-3 text-sm font-bold text-red-500 hover:bg-red-50 transition-colors"
                             >
-                                <LogOut className="w-4 h-4 ml-2" />
+                                <LogOut className="w-4 h-4 ml-3" />
                                 تسجيل خروج
                             </button>
                         </div>
                     )}
                 </div>
             ) : (
-                // Logged out State - Google Button
                 <button
                     onClick={onLogin}
-                    className="mr-4 flex items-center bg-white text-gray-700 border border-gray-300 px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-50 hover:shadow-sm transition-all shadow-sm"
+                    className="mr-4 flex items-center bg-gray-900 text-white px-5 py-2.5 rounded-full text-sm font-black hover:bg-gray-800 transition-all shadow-md active:scale-95"
                 >
-                    <svg className="w-4 h-4 ml-2" viewBox="0 0 24 24">
-                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                        <path d="M5.84 14.11c-.22-.66-.35-1.36-.35-2.11s.13-1.45.35-2.11V7.05H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.95l3.66-2.84z" fill="#FBBC05"/>
-                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.05l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                    </svg>
-                    تسجيل الدخول
+                    <UserIcon className="w-4 h-4 ml-2" />
+                    دخول المالك
                 </button>
             )}
 
             <div className="flex items-center sm:hidden mr-2">
                 <button 
                     onClick={() => setIsMenuOpen(!isMenuOpen)}
-                    className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
+                    className="p-2 rounded-xl text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-colors"
                 >
                 <Menu className="h-6 w-6" />
                 </button>
@@ -143,14 +150,27 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage, user, onLogin,
         </div>
       </div>
 
-      {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="sm:hidden border-t border-gray-100">
-            <div className="pt-2 pb-3 space-y-1">
-                <button onClick={() => onNavigate('home')} className="block w-full text-right px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50">
+        <div className="sm:hidden border-t border-gray-100 bg-white">
+            <div className="pt-2 pb-6 space-y-1 px-4">
+                <button onClick={() => {onNavigate('home'); setIsMenuOpen(false);}} className="block w-full text-right px-4 py-3 text-base font-bold text-gray-700 hover:bg-gray-50 rounded-xl">
                     الرئيسية
                 </button>
-                <button onClick={() => onNavigate('admin')} className="block w-full text-right px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50">
-                    لوحة التحكم
-                </button>
-                <button onClick={() => onNavigate('upload')} className="block w-full text-right px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-5
+                {isOwner && (
+                    <>
+                        <button onClick={() => {onNavigate('admin'); setIsMenuOpen(false);}} className="block w-full text-right px-4 py-3 text-base font-bold text-gray-700 hover:bg-gray-50 rounded-xl">
+                            لوحة التحكم
+                        </button>
+                        <button onClick={() => {onNavigate('upload'); setIsMenuOpen(false);}} className="block w-full text-right px-4 py-3 text-base font-black text-primary-600 bg-primary-50 rounded-xl mt-2">
+                            رفع قصة جديدة
+                        </button>
+                    </>
+                )}
+            </div>
+        </div>
+      )}
+    </nav>
+  );
+};
+
+export default Navbar;
